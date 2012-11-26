@@ -1,9 +1,18 @@
 var http = require('http'),
     url = require('url');
+    
+var mailadapter = function() {
+    
+}
 
-var handleRequest = function(req, res, next) {
+mailadapter.prototype._handleRequest = function(req, res, next) {
     res.writeHead(200, {'Content-Type': 'text/plain'});
     res.end("I'm going to process all the mail");
 }
 
-module.exports = handleRequest;
+mailadapter.prototype.start = function(dh) {
+    
+    dh.server.get('/mail', this._handleRequest);
+}
+
+module.exports = mailadapter;
