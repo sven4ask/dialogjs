@@ -3,6 +3,8 @@ var xmpp = require('simple-xmpp'),
 	adapterConfig = require('../routes/adapterconfig.js');
 
 var XmppAdapter = function() {
+  this.host = 'talk.google.com';
+  this.port = 5222;
 }
 
 XmppAdapter.prototype = new Text;
@@ -15,18 +17,20 @@ XmppAdapter.prototype.start = function(dh) {
 	adapterConfig.findAll(function(err, adapters) {
 		for(var x in adapters) {
 			var adapter = adapters[x];
-			if(adapter.adapterType == "XMPP") {
+			if(adapter.adapterType == thiz.getAdapterType()) {
 				var xmppConn = {};
 				xmppConn.from = adapter.accessToken;
 				
 				xmppConn.conn = new xmpp.SimpleXMPP();
 				thiz.addListeners(xmppConn);
 				
+        console.log("Going to connect to host: "+thiz.host+" for user: "+adapter.accessToken+" with pass: "+adapter.accessTokenSecret);
+        
 				xmppConn.conn.connect({
 				  jid         : adapter.accessToken,
 				  password    : adapter.accessTokenSecret,
-				  host        : 'talk.google.com',
-				  port        : 5222
+				  host        : thiz.host,
+				  port        : thiz.post
 				});
 				thiz.conns[adapter.accessToken] = xmppConn;
 			}
@@ -48,6 +52,8 @@ XmppAdapter.prototype.addListeners = function(xmppConn) {
 	var thiz=this;
 	xmppConn.conn.on('online', function() {
 		console.log('Yes, '+xmppConn.from+' is connected!');
+    // Do get roster to receive invitations
+    xmppConn.conn.getRoster();
 	});
 	
 	xmppConn.conn.on('chat', function(from, text) {
@@ -60,7 +66,8 @@ XmppAdapter.prototype.addListeners = function(xmppConn) {
 	});
 	
 	xmppConn.conn.on('subscribe', function(from) {
-		xmppConn.conn.acceptSubscription(from);
+		console.log('Received invitation from: '+from);
+    xmppConn.conn.acceptSubscription(from);
 		console.log('Accepted invitation from: '+from);
 	});
 
